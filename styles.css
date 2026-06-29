@@ -1,0 +1,258 @@
+/* LiteTube - Lightweight YouTube Frontend for Low-End Devices */
+/* Optimized for Wii U, 3DS, and other low-end devices */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #1a1a1a;
+    color: #fff;
+    line-height: 1.4;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 10px;
+}
+
+/* Header */
+header {
+    background: #2a2a2a;
+    padding: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+h1 {
+    font-size: 24px;
+    color: #ff0000;
+    margin: 0;
+}
+
+.home-btn {
+    padding: 8px 16px;
+    font-size: 14px;
+    background: #444;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+.home-btn:hover {
+    background: #555;
+}
+
+.search-box {
+    display: flex;
+    gap: 5px;
+}
+
+#searchInput {
+    flex: 1;
+    padding: 10px;
+    font-size: 14px;
+    border: 1px solid #444;
+    background: #333;
+    color: #fff;
+}
+
+#searchBtn {
+    padding: 10px 20px;
+    font-size: 14px;
+    background: #ff0000;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+#searchBtn:hover {
+    background: #cc0000;
+}
+
+/* Main content */
+main {
+    padding: 10px 0;
+}
+
+/* Home page */
+.home-content {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.home-content h2 {
+    font-size: 28px;
+    margin-bottom: 15px;
+    color: #fff;
+}
+
+.home-content p {
+    font-size: 16px;
+    color: #888;
+}
+
+/* Video player */
+.video-player {
+    background: #000;
+    margin-bottom: 15px;
+}
+
+#player {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+}
+
+.video-info {
+    background: #2a2a2a;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.video-info h2 {
+    font-size: 18px;
+    margin-bottom: 8px;
+    word-wrap: break-word;
+}
+
+.video-info p {
+    font-size: 14px;
+    color: #aaa;
+    margin-bottom: 10px;
+}
+
+.btn {
+    padding: 8px 16px;
+    font-size: 14px;
+    background: #444;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background: #555;
+}
+
+/* Search results */
+#results {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+}
+
+.video-card {
+    background: #2a2a2a;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.video-card:hover {
+    background: #333;
+}
+
+.thumbnail {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.video-card-info {
+    padding: 10px;
+}
+
+.video-card-title {
+    font-size: 14px;
+    margin-bottom: 5px;
+    word-wrap: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.video-card-channel {
+    font-size: 12px;
+    color: #aaa;
+}
+
+/* Utility classes */
+.hidden {
+    display: none;
+}
+
+.error {
+    color: #ff6b6b;
+    padding: 15px;
+    background: #2a2a2a;
+}
+
+#loading {
+    text-align: center;
+    padding: 20px;
+    font-size: 16px;
+}
+
+.intro-text {
+    text-align: center;
+    padding: 40px 20px;
+    color: #888;
+    font-size: 14px;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 15px;
+    margin-top: 20px;
+    color: #666;
+    font-size: 12px;
+}
+
+/* Responsive design for small screens (Wii U, 3DS) */
+@media (max-width: 640px) {
+    .container {
+        padding: 5px;
+    }
+    
+    h1 {
+        font-size: 20px;
+    }
+    
+    #results {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 8px;
+    }
+    
+    .video-card-title {
+        font-size: 12px;
+    }
+    
+    .video-card-channel {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 400px) {
+    #results {
+        grid-template-columns: 1fr;
+    }
+    
+    .search-box {
+        flex-direction: column;
+    }
+    
+    #searchBtn {
+        width: 100%;
+    }
+}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LiteTube - YouTube for Low-End Devices</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>LiteTube</h1>
+            <button id="homeBtn" class="home-btn">Home</button>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search YouTube or paste URL..." />
+                <button id="searchBtn">Search</button>
+            </div>
+        </header>
+
+        <main>
+            <div id="homeContainer">
+                <div class="home-content">
+                    <h2>Welcome to LiteTube</h2>
+                    <p>Enter a search query above to find videos on YouTube</p>
+                </div>
+            </div>
+
+            <div id="videoContainer" class="hidden">
+                <div class="video-player">
+                    <div id="player"></div>
+                </div>
+                <div class="video-info">
+                    <h2 id="videoTitle"></h2>
+                    <p id="videoChannel"></p>
+                    <button id="backBtn" class="btn">Back to Results</button>
+                </div>
+            </div>
+
+            <div id="resultsContainer" class="hidden">
+                <div id="loading" class="hidden">Loading...</div>
+                <div id="results"></div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Optimized for Wii U, 3DS, and other low-end devices</p>
+        </footer>
+    </div>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="script.js"></script>
+</body>
+</html>
