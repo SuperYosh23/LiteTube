@@ -3,8 +3,8 @@
 
 const CORS_PROXIES = [
     'https://api.allorigins.win/raw?url=',
-    'https://corsproxy.io/?',
-    'https://api.codetabs.com/v1/proxy?quest='
+    'https://api.codetabs.com/v1/proxy?quest=',
+    'https://cors-anywhere.herokuapp.com/'
 ];
 let currentProxyIndex = 0;
 let player;
