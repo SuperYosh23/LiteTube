@@ -11,6 +11,23 @@ var currentProxyIndex = 0;
 var player;
 var currentVideoId = null;
 
+// Debug function for on-screen logging (Wii U has no console)
+function debugLog(message) {
+    console.log(message);
+    var debugDiv = document.getElementById('debug');
+    if (debugDiv) {
+        debugDiv.innerHTML += message + '<br>';
+        debugDiv.scrollTop = debugDiv.scrollHeight;
+    }
+}
+
+function clearDebug() {
+    var debugDiv = document.getElementById('debug');
+    if (debugDiv) {
+        debugDiv.innerHTML = '';
+    }
+}
+
 // Initialize YouTube IFrame Player API
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('player', {
@@ -51,6 +68,10 @@ function extractVideoId(url) {
 
 // Search YouTube videos via web scraping
 function searchVideos(query) {
+    debugLog('searchVideos called with: ' + query);
+    clearDebug();
+    debugLog('Starting search for: ' + query);
+    
     var loading = document.getElementById('loading');
     var results = document.getElementById('results');
     
@@ -59,6 +80,7 @@ function searchVideos(query) {
     
     // Convert spaces to + for YouTube URL
     var searchQuery = query.replace(/\s+/g, '+');
+    debugLog('Search query: ' + searchQuery);
     
     // Try each CORS proxy until one works
     tryProxy(0, searchQuery, loading, results);
@@ -74,18 +96,18 @@ function tryProxy(index, searchQuery, loading, results) {
     var proxy = CORS_PROXIES[index];
     var searchUrl = 'https://www.youtube.com/results?search_query=' + searchQuery;
     
-    console.log('Trying proxy ' + index + ': ' + proxy);
+    debugLog('Trying proxy ' + index + ': ' + proxy);
     
     var xhr = new XMLHttpRequest();
     xhr.open('GET', proxy + encodeURIComponent(searchUrl), true);
     xhr.onreadystatechange = function() {
         if (xhr.readyState === 4) {
-            console.log('Response status: ' + xhr.status);
+            debugLog('Response status: ' + xhr.status);
             if (xhr.status === 200) {
                 var html = xhr.responseText;
-                console.log('HTML length: ' + html.length);
+                debugLog('HTML length: ' + html.length);
                 var videos = parseYouTubeResults(html);
-                console.log('Found ' + videos.length + ' videos');
+                debugLog('Found ' + videos.length + ' videos');
                 
                 if (videos && videos.length > 0) {
                     currentProxyIndex = index;
@@ -95,13 +117,13 @@ function tryProxy(index, searchQuery, loading, results) {
                     tryProxy(index + 1, searchQuery, loading, results);
                 }
             } else {
-                console.error('Error with proxy ' + CORS_PROXIES[index] + ': HTTP ' + xhr.status);
+                debugLog('Error with proxy ' + CORS_PROXIES[index] + ': HTTP ' + xhr.status);
                 tryProxy(index + 1, searchQuery, loading, results);
             }
         }
     };
     xhr.onerror = function() {
-        console.error('Error with proxy ' + CORS_PROXIES[index]);
+        debugLog('Error with proxy ' + CORS_PROXIES[index]);
         tryProxy(index + 1, searchQuery, loading, results);
     };
     xhr.send();
@@ -207,7 +229,7 @@ function parseYouTubeResults(html) {
                 }
                 if (videos.length > 0) return videos;
             } catch (e) {
-                console.error('Error parsing ytInitialData:', e);
+                debugLog('Error parsing ytInitialData: ' + e);
             }
         }
     }
@@ -260,13 +282,13 @@ function parseYouTubeResults(html) {
 
 // Display search results
 function displayResults(items) {
-    console.log('displayResults called with ' + items.length + ' items');
+    debugLog('displayResults called with ' + items.length + ' items');
     var results = document.getElementById('results');
     var resultsContainer = document.getElementById('resultsContainer');
     
-    console.log('Results container before: ' + resultsContainer.className);
+    debugLog('Results container before: ' + resultsContainer.className);
     resultsContainer.classList.remove('hidden');
-    console.log('Results container after: ' + resultsContainer.className);
+    debugLog('Results container after: ' + resultsContainer.className);
     
     for (var i = 0; i < items.length; i++) {
         var item = items[i];
@@ -279,7 +301,7 @@ function displayResults(items) {
             thumbnail = 'https://img.youtube.com/vi/' + videoId + '/mqdefault.jpg';
         }
         
-        console.log('Creating video card for: ' + title);
+        debugLog('Creating video card for: ' + title);
         var videoCard = document.createElement('div');
         videoCard.className = 'video-card';
         videoCard.innerHTML = 
@@ -298,7 +320,7 @@ function displayResults(items) {
         results.appendChild(videoCard);
     }
     
-    console.log('Finished adding ' + items.length + ' video cards');
+    debugLog('Finished adding ' + items.length + ' video cards');
 }
 
 // Handle search/URL input
