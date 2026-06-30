@@ -1,14 +1,15 @@
 // LiteTube - Lightweight YouTube Frontend for Low-End Devices
 // Uses web scraping with CORS proxy and YouTube IFrame Player API
+// ES5 compatible for Wii U browser
 
-const CORS_PROXIES = [
+var CORS_PROXIES = [
     'https://api.allorigins.win/raw?url=',
     'https://api.codetabs.com/v1/proxy?quest=',
     'https://cors-anywhere.herokuapp.com/'
 ];
-let currentProxyIndex = 0;
-let player;
-let currentVideoId = null;
+var currentProxyIndex = 0;
+var player;
+var currentVideoId = null;
 
 // Initialize YouTube IFrame Player API
 function onYouTubeIframeAPIReady() {
@@ -33,13 +34,14 @@ function onPlayerReady(event) {
 
 // Extract video ID from YouTube URL
 function extractVideoId(url) {
-    const patterns = [
+    var patterns = [
         /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/)([^&\n?#]+)/,
         /^([a-zA-Z0-9_-]{11})$/
     ];
     
-    for (const pattern of patterns) {
-        const match = url.match(pattern);
+    for (var i = 0; i < patterns.length; i++) {
+        var pattern = patterns[i];
+        var match = url.match(pattern);
         if (match) {
             return match[1];
         }
@@ -48,100 +50,155 @@ function extractVideoId(url) {
 }
 
 // Search YouTube videos via web scraping
-async function searchVideos(query) {
-    const loading = document.getElementById('loading');
-    const results = document.getElementById('results');
+function searchVideos(query) {
+    var loading = document.getElementById('loading');
+    var results = document.getElementById('results');
     
     loading.classList.remove('hidden');
     results.innerHTML = '';
     
     // Convert spaces to + for YouTube URL
-    const searchQuery = query.replace(/\s+/g, '+');
+    var searchQuery = query.replace(/\s+/g, '+');
     
     // Try each CORS proxy until one works
-    for (let i = 0; i < CORS_PROXIES.length; i++) {
-        try {
-            const proxy = CORS_PROXIES[i];
-            const searchUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
-            console.log(`Trying proxy ${i}: ${proxy}`);
-            const response = await fetch(proxy + encodeURIComponent(searchUrl));
-            
-            console.log(`Response status: ${response.status}`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const html = await response.text();
-            console.log(`HTML length: ${html.length}`);
-            const videos = parseYouTubeResults(html);
-            console.log(`Found ${videos.length} videos`);
-            
-            if (videos && videos.length > 0) {
-                currentProxyIndex = i;
-                displayResults(videos);
-                loading.classList.add('hidden');
-                return;
-            }
-        } catch (error) {
-            console.error(`Error with proxy ${CORS_PROXIES[i]}:`, error.message);
-        }
+    tryProxy(0, searchQuery, loading, results);
+}
+
+function tryProxy(index, searchQuery, loading, results) {
+    if (index >= CORS_PROXIES.length) {
+        // All proxies failed - show manual URL option
+        showDirectLoadOption(results, loading);
+        return;
     }
     
-    // All proxies failed - show manual URL option
-    results.innerHTML = `
-        <p class="error">Unable to fetch search results. All CORS proxies are currently unavailable.</p>
-        <div style="padding: 20px; background: #2a2a2a; margin-top: 15px;">
-            <h3 style="margin-bottom: 10px;">Alternative: Direct Video Load</h3>
-            <p style="margin-bottom: 10px; color: #aaa;">Paste a YouTube URL or video ID directly:</p>
-            <input type="text" id="directUrlInput" placeholder="https://youtube.com/watch?v=..." 
-                   style="width: 100%; padding: 10px; margin-bottom: 10px; background: #333; color: #fff; border: 1px solid #444;">
-            <button id="directLoadBtn" style="padding: 10px 20px; background: #ff0000; color: #fff; border: none; cursor: pointer;">Load Video</button>
-        </div>
-    `;
+    var proxy = CORS_PROXIES[index];
+    var searchUrl = 'https://www.youtube.com/results?search_query=' + searchQuery;
+    
+    console.log('Trying proxy ' + index + ': ' + proxy);
+    
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', proxy + encodeURIComponent(searchUrl), true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            console.log('Response status: ' + xhr.status);
+            if (xhr.status === 200) {
+                var html = xhr.responseText;
+                console.log('HTML length: ' + html.length);
+                var videos = parseYouTubeResults(html);
+                console.log('Found ' + videos.length + ' videos');
+                
+                if (videos && videos.length > 0) {
+                    currentProxyIndex = index;
+                    displayResults(videos);
+                    loading.classList.add('hidden');
+                } else {
+                    tryProxy(index + 1, searchQuery, loading, results);
+                }
+            } else {
+                console.error('Error with proxy ' + CORS_PROXIES[index] + ': HTTP ' + xhr.status);
+                tryProxy(index + 1, searchQuery, loading, results);
+            }
+        }
+    };
+    xhr.onerror = function() {
+        console.error('Error with proxy ' + CORS_PROXIES[index]);
+        tryProxy(index + 1, searchQuery, loading, results);
+    };
+    xhr.send();
+}
+
+function showDirectLoadOption(results, loading) {
+    results.innerHTML = 
+        '<p class="error">Unable to fetch search results. All CORS proxies are currently unavailable.</p>' +
+        '<div style="padding: 20px; background: #2a2a2a; margin-top: 15px;">' +
+        '<h3 style="margin-bottom: 10px;">Alternative: Direct Video Load</h3>' +
+        '<p style="margin-bottom: 10px; color: #aaa;">Paste a YouTube URL or video ID directly:</p>' +
+        '<input type="text" id="directUrlInput" placeholder="https://youtube.com/watch?v=..." ' +
+        'style="width: 100%; padding: 10px; margin-bottom: 10px; background: #333; color: #fff; border: 1px solid #444;">' +
+        '<button id="directLoadBtn" style="padding: 10px 20px; background: #ff0000; color: #fff; border: none; cursor: pointer;">Load Video</button>' +
+        '</div>';
     loading.classList.add('hidden');
     
     // Add event listener for direct load button
-    document.getElementById('directLoadBtn').addEventListener('click', () => {
-        const url = document.getElementById('directUrlInput').value.trim();
-        const videoId = extractVideoId(url);
-        if (videoId) {
-            playVideo(videoId, 'Direct Load', 'YouTube');
-        } else {
-            alert('Invalid YouTube URL or video ID');
-        }
-    });
+    var directLoadBtn = document.getElementById('directLoadBtn');
+    if (directLoadBtn) {
+        directLoadBtn.onclick = function() {
+            var url = document.getElementById('directUrlInput').value.trim();
+            var videoId = extractVideoId(url);
+            if (videoId) {
+                playVideo(videoId, 'Direct Load', 'YouTube');
+            } else {
+                alert('Invalid YouTube URL or video ID');
+            }
+        };
+    }
 }
 
 // Parse YouTube search results from HTML
 function parseYouTubeResults(html) {
-    const videos = [];
+    var videos = [];
     
     // Try to extract video data from ytInitialData (multiple patterns)
-    const ytDataPatterns = [
+    var ytDataPatterns = [
         /var ytInitialData = ({.*?});/,
         /ytInitialData = ({.*?});/,
         /"ytInitialData":({.*?}),/
     ];
     
-    for (const pattern of ytDataPatterns) {
-        const ytDataMatch = html.match(pattern);
+    for (var i = 0; i < ytDataPatterns.length; i++) {
+        var pattern = ytDataPatterns[i];
+        var ytDataMatch = html.match(pattern);
         if (ytDataMatch) {
             try {
-                const data = JSON.parse(ytDataMatch[1]);
-                const contents = data.contents?.twoColumnSearchResultsRenderer?.primaryContents?.sectionListRenderer?.contents;
+                var data = JSON.parse(ytDataMatch[1]);
+                var contents = null;
+                if (data.contents && data.contents.twoColumnSearchResultsRenderer && 
+                    data.contents.twoColumnSearchResultsRenderer.primaryContents && 
+                    data.contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer) {
+                    contents = data.contents.twoColumnSearchResultsRenderer.primaryContents.sectionListRenderer.contents;
+                }
                 
                 if (contents) {
-                    for (const section of contents) {
-                        const items = section.itemSectionRenderer?.contents;
+                    for (var j = 0; j < contents.length; j++) {
+                        var section = contents[j];
+                        var items = null;
+                        if (section.itemSectionRenderer) {
+                            items = section.itemSectionRenderer.contents;
+                        }
                         if (items) {
-                            for (const item of items) {
-                                const video = item.videoRenderer || item.compactVideoRenderer;
+                            for (var k = 0; k < items.length; k++) {
+                                var item = items[k];
+                                var video = null;
+                                if (item.videoRenderer) {
+                                    video = item.videoRenderer;
+                                } else if (item.compactVideoRenderer) {
+                                    video = item.compactVideoRenderer;
+                                }
                                 if (video && video.videoId) {
+                                    var title = '';
+                                    if (video.title && video.title.runs && video.title.runs[0]) {
+                                        title = video.title.runs[0].text;
+                                    } else if (video.title && video.title.simpleText) {
+                                        title = video.title.simpleText;
+                                    }
+                                    
+                                    var channel = '';
+                                    if (video.ownerText && video.ownerText.runs && video.ownerText.runs[0]) {
+                                        channel = video.ownerText.runs[0].text;
+                                    } else if (video.shortBylineText && video.shortBylineText.runs && video.shortBylineText.runs[0]) {
+                                        channel = video.shortBylineText.runs[0].text;
+                                    }
+                                    
+                                    var thumbnail = '';
+                                    if (video.thumbnail && video.thumbnail.thumbnails && video.thumbnail.thumbnails[0]) {
+                                        thumbnail = video.thumbnail.thumbnails[0].url;
+                                    }
+                                    
                                     videos.push({
                                         videoId: video.videoId,
-                                        title: video.title?.runs?.[0]?.text || video.title?.simpleText || '',
-                                        channel: video.ownerText?.runs?.[0]?.text || video.shortBylineText?.runs?.[0]?.text || '',
-                                        thumbnail: video.thumbnail?.thumbnails?.[0]?.url || ''
+                                        title: title,
+                                        channel: channel,
+                                        thumbnail: thumbnail
                                     });
                                 }
                             }
@@ -157,23 +214,43 @@ function parseYouTubeResults(html) {
     
     // Fallback: improved regex extraction
     if (videos.length === 0) {
-        const videoIdRegex = /"videoId":"([a-zA-Z0-9_-]{11})"/g;
-        const titleRegex = /"text":"([^"]{10,100})"/g;
-        const channelRegex = /"channelName":"([^"]+)"/g;
+        var videoIdRegex = /"videoId":"([a-zA-Z0-9_-]{11})"/g;
+        var titleRegex = /"text":"([^"]{10,100})"/g;
+        var channelRegex = /"channelName":"([^"]+)"/g;
         
-        const videoIds = [...html.matchAll(videoIdRegex)].map(m => m[1]);
-        const titles = [...html.matchAll(titleRegex)].map(m => m[1]);
-        const channels = [...html.matchAll(channelRegex)].map(m => m[1]);
+        var videoIds = [];
+        var match;
+        while ((match = videoIdRegex.exec(html)) !== null) {
+            videoIds.push(match[1]);
+        }
+        
+        var titles = [];
+        while ((match = titleRegex.exec(html)) !== null) {
+            titles.push(match[1]);
+        }
+        
+        var channels = [];
+        while ((match = channelRegex.exec(html)) !== null) {
+            channels.push(match[1]);
+        }
         
         // Filter unique video IDs
-        const uniqueVideoIds = [...new Set(videoIds)];
+        var uniqueVideoIds = [];
+        var seen = {};
+        for (var i = 0; i < videoIds.length; i++) {
+            if (!seen[videoIds[i]]) {
+                seen[videoIds[i]] = true;
+                uniqueVideoIds.push(videoIds[i]);
+            }
+        }
         
-        for (let i = 0; i < Math.min(uniqueVideoIds.length, 12); i++) {
+        var maxVideos = Math.min(uniqueVideoIds.length, 12);
+        for (var i = 0; i < maxVideos; i++) {
             videos.push({
                 videoId: uniqueVideoIds[i],
                 title: titles[i] || 'Video',
                 channel: channels[i] || 'Channel',
-                thumbnail: `https://img.youtube.com/vi/${uniqueVideoIds[i]}/mqdefault.jpg`
+                thumbnail: 'https://img.youtube.com/vi/' + uniqueVideoIds[i] + '/mqdefault.jpg'
             });
         }
     }
@@ -183,59 +260,66 @@ function parseYouTubeResults(html) {
 
 // Display search results
 function displayResults(items) {
-    console.log('displayResults called with', items.length, 'items');
-    const results = document.getElementById('results');
-    const resultsContainer = document.getElementById('resultsContainer');
+    console.log('displayResults called with ' + items.length + ' items');
+    var results = document.getElementById('results');
+    var resultsContainer = document.getElementById('resultsContainer');
     
-    console.log('Results container before:', resultsContainer.className);
+    console.log('Results container before: ' + resultsContainer.className);
     resultsContainer.classList.remove('hidden');
-    console.log('Results container after:', resultsContainer.className);
+    console.log('Results container after: ' + resultsContainer.className);
     
-    items.forEach(item => {
-        const videoId = item.videoId;
-        const title = item.title;
-        const channel = item.channel || item.author;
-        const thumbnail = item.thumbnail || 
-                         item.videoThumbnails?.find(t => t.quality === 'medium')?.url || 
-                         item.videoThumbnails?.find(t => t.quality === 'default')?.url ||
-                         `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+    for (var i = 0; i < items.length; i++) {
+        var item = items[i];
+        var videoId = item.videoId;
+        var title = item.title;
+        var channel = item.channel || item.author;
+        var thumbnail = item.thumbnail;
         
-        console.log('Creating video card for:', title);
-        const videoCard = document.createElement('div');
+        if (!thumbnail) {
+            thumbnail = 'https://img.youtube.com/vi/' + videoId + '/mqdefault.jpg';
+        }
+        
+        console.log('Creating video card for: ' + title);
+        var videoCard = document.createElement('div');
         videoCard.className = 'video-card';
-        videoCard.innerHTML = `
-            <img src="${thumbnail}" alt="${title}" class="thumbnail" loading="lazy">
-            <div class="video-card-info">
-                <h3 class="video-card-title">${title}</h3>
-                <p class="video-card-channel">${channel}</p>
-            </div>
-        `;
+        videoCard.innerHTML = 
+            '<img src="' + thumbnail + '" alt="' + title + '" class="thumbnail">' +
+            '<div class="video-card-info">' +
+            '<h3 class="video-card-title">' + title + '</h3>' +
+            '<p class="video-card-channel">' + channel + '</p>' +
+            '</div>';
         
-        videoCard.addEventListener('click', () => playVideo(videoId, title, channel));
+        (function(vid, t, c) {
+            videoCard.onclick = function() {
+                playVideo(vid, t, c);
+            };
+        })(videoId, title, channel);
+        
         results.appendChild(videoCard);
-    });
+    }
     
-    console.log('Finished adding', items.length, 'video cards');
+    console.log('Finished adding ' + items.length + ' video cards');
 }
 
 // Handle search/URL input
 function handleSearch() {
-    const input = document.getElementById('searchInput').value.trim();
+    var input = document.getElementById('searchInput');
+    var inputValue = input.value.trim();
     
-    if (!input) return;
+    if (!inputValue) return;
     
     // Hide home container
     document.getElementById('homeContainer').classList.add('hidden');
     
     // Check if it's a YouTube URL or video ID
-    const videoId = extractVideoId(input);
+    var videoId = extractVideoId(inputValue);
     if (videoId) {
         playVideo(videoId, 'Video from URL', 'YouTube');
         return;
     }
     
     // Otherwise treat it as a search query
-    searchVideos(input);
+    searchVideos(inputValue);
 }
 
 // Load video from URL
@@ -281,13 +365,13 @@ function goHome() {
 }
 
 // Event listeners
-document.getElementById('searchBtn').addEventListener('click', handleSearch);
+document.getElementById('searchBtn').onclick = handleSearch;
 
-document.getElementById('searchInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
+document.getElementById('searchInput').onkeypress = function(e) {
+    if (e.key === 'Enter' || e.keyCode === 13) {
         handleSearch();
     }
-});
+};
 
-document.getElementById('backBtn').addEventListener('click', goBack);
-document.getElementById('homeBtn').addEventListener('click', goHome);
+document.getElementById('backBtn').onclick = goBack;
+document.getElementById('homeBtn').onclick = goHome;

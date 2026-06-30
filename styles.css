@@ -1,5 +1,6 @@
 /* LiteTube - Lightweight YouTube Frontend for Low-End Devices */
 /* Optimized for Wii U, 3DS, and other low-end devices */
+/* ES5-compatible CSS for older browsers */
 
 * {
     margin: 0;
@@ -26,17 +27,19 @@ header {
     background: #2a2a2a;
     padding: 15px;
     margin-bottom: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
+    overflow: hidden;
+}
+
+.header-top {
+    margin-bottom: 10px;
+    overflow: hidden;
 }
 
 h1 {
     font-size: 24px;
     color: #ff0000;
-    margin: 0;
+    margin: 0 0 10px 0;
+    float: left;
 }
 
 .home-btn {
@@ -46,42 +49,39 @@ h1 {
     color: #fff;
     border: none;
     cursor: pointer;
-}
-
-.home-btn:hover {
-    background: #555;
+    float: right;
 }
 
 .search-box {
-    display: flex;
-    gap: 5px;
+    clear: both;
+    overflow: hidden;
 }
 
 #searchInput {
-    flex: 1;
+    width: 70%;
     padding: 10px;
     font-size: 14px;
     border: 1px solid #444;
     background: #333;
     color: #fff;
+    float: left;
 }
 
 #searchBtn {
-    padding: 10px 20px;
+    width: 28%;
+    padding: 10px;
     font-size: 14px;
     background: #ff0000;
     color: #fff;
     border: none;
     cursor: pointer;
-}
-
-#searchBtn:hover {
-    background: #cc0000;
+    float: right;
 }
 
 /* Main content */
 main {
     padding: 10px 0;
+    clear: both;
 }
 
 /* Home page */
@@ -105,17 +105,24 @@ main {
 .video-player {
     background: #000;
     margin-bottom: 15px;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    position: relative;
+    height: 0;
 }
 
 #player {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    aspect-ratio: 16 / 9;
+    height: 100%;
 }
 
 .video-info {
     background: #2a2a2a;
     padding: 15px;
     margin-bottom: 15px;
+    overflow: hidden;
 }
 
 .video-info h2 {
@@ -139,25 +146,23 @@ main {
     cursor: pointer;
 }
 
-.btn:hover {
-    background: #555;
-}
-
 /* Search results */
 #results {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 10px;
+    overflow: hidden;
 }
 
 .video-card {
     background: #2a2a2a;
     cursor: pointer;
     overflow: hidden;
+    margin-bottom: 10px;
+    width: 48%;
+    float: left;
+    margin-right: 2%;
 }
 
-.video-card:hover {
-    background: #333;
+.video-card:nth-child(even) {
+    margin-right: 0;
 }
 
 .thumbnail {
@@ -174,10 +179,7 @@ main {
     font-size: 14px;
     margin-bottom: 5px;
     word-wrap: break-word;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
+    height: 40px;
     overflow: hidden;
 }
 
@@ -217,42 +219,24 @@ footer {
     margin-top: 20px;
     color: #666;
     font-size: 12px;
+    clear: both;
 }
 
-/* Responsive design for small screens (Wii U, 3DS) */
-@media (max-width: 640px) {
-    .container {
-        padding: 5px;
-    }
-    
-    h1 {
-        font-size: 20px;
-    }
-    
-    #results {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 8px;
-    }
-    
-    .video-card-title {
-        font-size: 12px;
-    }
-    
-    .video-card-channel {
-        font-size: 11px;
-    }
+/* Direct load input */
+#directUrlInput {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: #333;
+    color: #fff;
+    border: 1px solid #444;
+    box-sizing: border-box;
 }
 
-@media (max-width: 400px) {
-    #results {
-        grid-template-columns: 1fr;
-    }
-    
-    .search-box {
-        flex-direction: column;
-    }
-    
-    #searchBtn {
-        width: 100%;
-    }
+#directLoadBtn {
+    padding: 10px 20px;
+    background: #ff0000;
+    color: #fff;
+    border: none;
+    cursor: pointer;
 }
